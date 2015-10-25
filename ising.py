@@ -97,6 +97,9 @@ def metropolis(lattice,temperature):
             sys.stdout.write("Accepted Metropolis move at (%d,%d); Probability:"
                              "%0.4f\n" % (pickedX,pickedY,boltzmann))
     else:
+        boltzmann = 1
+        randNum = 1
+        result = True
         sys.stdout.write("Accepted Metropolis move at (%d,%d); Probability: 1"
                          "\n" % (pickedX,pickedY))
 
