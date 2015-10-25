@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import sys
+import logger
 
 class IsingLattice:
     #class constructor
@@ -14,7 +15,7 @@ class IsingLattice:
             self._lattice = np.random.choice(np.array([-1,1]),size=(n_x,n_y))
         else:
             self._lattice = np.ones(n_x,n_y)
-    
+
     #flip spin state at lattice site x,y
     def flip(self,x,y):
         if self._lattice[x,y] == -1:
@@ -58,17 +59,15 @@ class IsingLattice:
             neighborList.pop(idx)
         return neighborList
 
-class MetropolisLogger
-    def __init__(self):
-        raise NotImplementedError()
-
 #hamiltonian evaluation function
 def hamiltonian(lattice,eps=1):
     shape = lattice.shape()
     hamiltonian = 0
     for i in range(0,shape[0]):
         for j in range(0,shape[1]):
-            hamiltonian += -1*eps*sum([lattice.get(i,j)*lattice.get(neighbor[0],neighbor[1]) for neighbor in lattice.getNeighbors(i,j)])
+            hamiltonian += -1*eps*sum([lattice.get(i,j)*lattice.get(neighbor[0],
+                                       neighbor[1]) for neighbor in 
+                                       lattice.getNeighbors(i,j)])
     return hamiltonian
 
 #metropolis move acceptance function
@@ -88,13 +87,22 @@ def metropolis(lattice,temperature):
     if (newHamiltonian-origHamiltonian > 0):
         boltzmann = np.exp(-1*beta*(newHamiltonian-origHamiltonian))
         randNum = np.random.uniform()
+        result = True
         if boltzmann <= randNum:
             lattice.flip(pickedX,pickedY)
-            sys.stdout.write("Rejected Metropolis move at (%d,%d); Probability: %0.4f\n" % (pickedX,pickedY,boltzmann))
+            sys.stdout.write("Rejected Metropolis move at (%d,%d); Probability:"
+                             "%0.4f\n" % (pickedX,pickedY,boltzmann))
+            result = False
         else:
-            sys.stdout.write("Accepted Metropolis move at (%d,%d); Probability: %0.4f\n" % (pickedX,pickedY,boltzmann))
+            sys.stdout.write("Accepted Metropolis move at (%d,%d); Probability:"
+                             "%0.4f\n" % (pickedX,pickedY,boltzmann))
     else:
-        sys.stdout.write("Accepted Metropolis move at (%d,%d); Probability: 1\n" % (pickedX,pickedY))
+        sys.stdout.write("Accepted Metropolis move at (%d,%d); Probability: 1"
+                         "\n" % (pickedX,pickedY))
+
+    logdict = {"x":pickedX,"y":pickedY,"h1":origHamiltonian,"h2":newHamiltonian,
+               "met":boltzmann,"rng":randNum,"result":result}
+    return logdict
 
 def main(args):
     #assign arguments from command line
@@ -102,16 +110,27 @@ def main(args):
     n_y = int(args[1])
     nmoves = int(args[2])
     temperature = float(args[3])
+    filename = str(args[4])
+
     #construct ising lattice
     lattice = IsingLattice(n_x,n_y,random=True)
+
+    #start logger
+    keys = ['x','y','h1','h2','met','rng','result']
+    fmt = "%8d,%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%i"
+    log = logger.MetropolisLogger(filename,keys,fmtstring=fmt)
+
     #apply monte carlo moves
-    sys.stdout.write("Starting %d Monte Carlo moves on (%d x %d) lattice\n"%(nmoves,n_x,n_y))
+    sys.stdout.write("Starting %d Monte Carlo moves on (%d x %d) lattice\n"
+                     %(nmoves,n_x,n_y))
+
     #make figure to plot matrix on
     plt.ion()
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     for i in range(0,nmoves):
-        metropolis(lattice,temperature)
+        logdict = metropolis(lattice,temperature)
+        log.write_log(logdict,num=i+1)
         lattice.show(ax)
     plt.savefig("last.png")
 
