@@ -16,7 +16,6 @@ class MetropolisLogger:
 		else:
 			self.fmtstring = fmtstring+'\n'
 
-		print self.fmtstring.split()
 		#len(self.keys)+1 is to account for iteration number prepended at start
 		if len(self.fmtstring.split(',')) != len(self.keys)+1:
 			raise ValueError('Must have identical number of keys and '

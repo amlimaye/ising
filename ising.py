@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import sys
 import logger
 
@@ -90,18 +91,11 @@ def metropolis(lattice,temperature):
         result = True
         if boltzmann <= randNum:
             lattice.flip(pickedX,pickedY)
-            sys.stdout.write("Rejected Metropolis move at (%d,%d); Probability:"
-                             "%0.4f\n" % (pickedX,pickedY,boltzmann))
             result = False
-        else:
-            sys.stdout.write("Accepted Metropolis move at (%d,%d); Probability:"
-                             "%0.4f\n" % (pickedX,pickedY,boltzmann))
     else:
         boltzmann = 1
         randNum = 1
         result = True
-        sys.stdout.write("Accepted Metropolis move at (%d,%d); Probability: 1"
-                         "\n" % (pickedX,pickedY))
 
     logdict = {"x":pickedX,"y":pickedY,"h1":origHamiltonian,"h2":newHamiltonian,
                "met":boltzmann,"rng":randNum,"result":result}
@@ -114,6 +108,7 @@ def main(args):
     nmoves = int(args[2])
     temperature = float(args[3])
     filename = str(args[4])
+    moviefile = str(args[5])
 
     #construct ising lattice
     lattice = IsingLattice(n_x,n_y,random=True)
@@ -121,21 +116,29 @@ def main(args):
     #start logger
     keys = ['x','y','h1','h2','met','rng','result']
     fmt = "%8d,%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%i"
-    log = logger.MetropolisLogger(filename,keys,fmtstring=fmt)
-
-    #apply monte carlo moves
-    sys.stdout.write("Starting %d Monte Carlo moves on (%d x %d) lattice\n"
-                     %(nmoves,n_x,n_y))
+    log = logger.MetropolisLogger(filename,keys,fmtstring=fmt)    
 
     #make figure to plot matrix on
     plt.ion()
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
+
+    #start and setup animator on this figure
+    FileMovieWriter = matplotlib.animation.writers['ffmpeg']
+    mwriter = FileMovieWriter(fps=60)
+    mwriter.setup(fig,moviefile,100)
+
+    #apply monte carlo moves
+    sys.stdout.write("Starting %d Monte Carlo moves on (%d x %d) lattice\n"
+                     %(nmoves,n_x,n_y))
     for i in range(0,nmoves):
+        sys.stdout.write("Iteration %d\n" % i)
         logdict = metropolis(lattice,temperature)
         log.write_log(logdict,num=i+1)
+        mwriter.grab_frame()
         lattice.show(ax)
-    plt.savefig("last.png")
+
+    mwriter.finish()
 
 if __name__ == "__main__":
     main(sys.argv[1:])
