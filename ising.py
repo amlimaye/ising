@@ -3,7 +3,7 @@
 #import required libraries, use TkAgg backend for plotting
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import sys
 
@@ -13,7 +13,7 @@ class IsingLattice:
         if random:
             self._lattice = np.random.choice(np.array([-1,1]),size=(n_x,n_y))
         else:
-            self._lattice = np.ones(n_x.n_y)
+            self._lattice = np.ones(n_x,n_y)
     
     #flip spin state at lattice site x,y
     def flip(self,x,y):
@@ -57,6 +57,10 @@ class IsingLattice:
         for idx in deletionList:
             neighborList.pop(idx)
         return neighborList
+
+class MetropolisLogger
+    def __init__(self):
+        raise NotImplementedError()
 
 #hamiltonian evaluation function
 def hamiltonian(lattice,eps=1):
