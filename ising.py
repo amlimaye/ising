@@ -61,32 +61,42 @@ class IsingLattice:
         return neighborList
 
 #hamiltonian evaluation function
-def hamiltonian(lattice,eps=1):
+def hamiltonian(lattice,xytuple,eps=1,flip=True):
     shape = lattice.shape()
-    hamiltonian = 0
-    for i in range(0,shape[0]):
-        for j in range(0,shape[1]):
-            hamiltonian += -1*eps*sum([lattice.get(i,j)*lattice.get(neighbor[0],
-                                       neighbor[1]) for neighbor in 
-                                       lattice.getNeighbors(i,j)])
-    return hamiltonian
+    x = xytuple[0]
+    y = xytuple[1]
+    if flip:
+        oldHamiltonian = -1*sum([lattice.get(x,y)*lattice.get(neighbor[0],
+                                                              neighbor[1])
+                             for neighbor in lattice.getNeighbors(x,y)])
+        lattice.flip(x,y)
+        newHamiltonian = -1*sum([lattice.get(x,y)*lattice.get(neighbor[0],
+                                                              neighbor[1])
+                                 for neighbor in lattice.getNeighbors(x,y)])
+    else:
+        lattice.flip(x,y)
+        oldHamiltonian = -1*sum([lattice.get(x,y)*lattice.get(neighbor[0],
+                                                              neighbor[1])
+                             for neighbor in lattice.getNeighbors(x,y)])
+        lattice.flip(x,y)
+        newHamiltonian = -1*sum([lattice.get(x,y)*lattice.get(neighbor[0],
+                                                              neighbor[1])
+                                 for neighbor in lattice.getNeighbors(x,y)])
+
+    return newHamiltonian-oldHamiltonian
 
 #metropolis move acceptance function
 def metropolis(lattice,temperature):
     #evaluate inverse temperature
     beta = 1/temperature
-    #calculate original hamiltonian
-    origHamiltonian = hamiltonian(lattice)
     #sample x,y point on lattice from uniform distribution over the integers
     pickedX = np.random.random_integers(0,lattice.shape()[0]-1)
     pickedY = np.random.random_integers(0,lattice.shape()[1]-1)
-    #flip spin at the picked lattice point
-    lattice.flip(pickedX,pickedY)
-    #calculate new hamiltonian under lattice with flipped spin
-    newHamiltonian = hamiltonian(lattice)
+    #flip spin and calculate dH
+    dH = hamiltonian(lattice,(pickedX,pickedY),flip=True)
     #accept or reject according to metropolis function
-    if (newHamiltonian-origHamiltonian > 0):
-        boltzmann = np.exp(-1*beta*(newHamiltonian-origHamiltonian))
+    if (dH > 0):
+        boltzmann = np.exp(-1*beta*dH)
         randNum = np.random.uniform()
         result = True
         if boltzmann <= randNum:
@@ -97,8 +107,8 @@ def metropolis(lattice,temperature):
         randNum = 1
         result = True
 
-    logdict = {"x":pickedX,"y":pickedY,"h1":origHamiltonian,"h2":newHamiltonian,
-               "met":boltzmann,"rng":randNum,"result":result}
+    logdict = {"x":pickedX,"y":pickedY,"dH":dH,"met":boltzmann,"rng":randNum,
+               "result":result}
     return logdict
 
 def main(args):
@@ -114,8 +124,8 @@ def main(args):
     lattice = IsingLattice(n_x,n_y,random=True)
 
     #start logger
-    keys = ['x','y','h1','h2','met','rng','result']
-    fmt = "%8d,%d,%d,%0.8f,%0.8f,%0.8f,%0.8f,%i"
+    keys = ['x','y','dH','met','rng','result']
+    fmt = "%8d,%d,%d,%0.8f,%0.8f,%0.8f,%i"
     log = logger.MetropolisLogger(filename,keys,fmtstring=fmt)    
 
     #make figure to plot matrix on
