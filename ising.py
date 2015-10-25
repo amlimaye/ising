@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import sys
 import logger
+import progressbar
+from progressbar import ProgressBar
 
 class IsingLattice:
     #class constructor
@@ -61,39 +63,42 @@ class IsingLattice:
         return neighborList
 
 #hamiltonian evaluation function
-def hamiltonian(lattice,xytuple,eps=1,flip=True):
+def hamiltonian(lattice,xytuple,eps,extfield,flip=True):
     shape = lattice.shape()
     x = xytuple[0]
     y = xytuple[1]
     if flip:
-        oldHamiltonian = -1*sum([lattice.get(x,y)*lattice.get(neighbor[0],
-                                                              neighbor[1])
-                             for neighbor in lattice.getNeighbors(x,y)])
+        oldHamiltonian = -1*eps*sum([lattice.get(x,y)*lattice.get(neighbor[0],
+                                                                  neighbor[1])
+                                    for neighbor in lattice.getNeighbors(x,y)])
         lattice.flip(x,y)
-        newHamiltonian = -1*sum([lattice.get(x,y)*lattice.get(neighbor[0],
-                                                              neighbor[1])
-                                 for neighbor in lattice.getNeighbors(x,y)])
+        newHamiltonian = -1*eps*sum([lattice.get(x,y)*lattice.get(neighbor[0],
+                                                                  neighbor[1])
+                                    for neighbor in lattice.getNeighbors(x,y)])
     else:
         lattice.flip(x,y)
-        oldHamiltonian = -1*sum([lattice.get(x,y)*lattice.get(neighbor[0],
-                                                              neighbor[1])
-                             for neighbor in lattice.getNeighbors(x,y)])
+        oldHamiltonian = -1*eps*sum([lattice.get(x,y)*lattice.get(neighbor[0],
+                                                                  neighbor[1])
+                                    for neighbor in lattice.getNeighbors(x,y)])
         lattice.flip(x,y)
-        newHamiltonian = -1*sum([lattice.get(x,y)*lattice.get(neighbor[0],
-                                                              neighbor[1])
-                                 for neighbor in lattice.getNeighbors(x,y)])
+        newHamiltonian = -1*eps*sum([lattice.get(x,y)*lattice.get(neighbor[0],
+                                                                  neighbor[1])
+                                    for neighbor in lattice.getNeighbors(x,y)])
+    
+    #calculate external field term and add to hamiltonian
+    newHamiltonian += -1*extfield*lattice.get(x,y)
 
     return newHamiltonian-oldHamiltonian
 
 #metropolis move acceptance function
-def metropolis(lattice,temperature):
+def metropolis(lattice,temperature,eps=1,extfield=0):
     #evaluate inverse temperature
     beta = 1/temperature
     #sample x,y point on lattice from uniform distribution over the integers
     pickedX = np.random.random_integers(0,lattice.shape()[0]-1)
     pickedY = np.random.random_integers(0,lattice.shape()[1]-1)
     #flip spin and calculate dH
-    dH = hamiltonian(lattice,(pickedX,pickedY),flip=True)
+    dH = hamiltonian(lattice,(pickedX,pickedY),eps,extfield,flip=True)
     #accept or reject according to metropolis function
     if (dH > 0):
         boltzmann = np.exp(-1*beta*dH)
@@ -138,16 +143,24 @@ def main(args):
     mwriter = FileMovieWriter(fps=60)
     mwriter.setup(fig,moviefile,100)
 
-    #apply monte carlo moves
+    #print message with program start
     sys.stdout.write("Starting %d Monte Carlo moves on (%d x %d) lattice\n"
                      %(nmoves,n_x,n_y))
-    for i in range(0,nmoves):
-        sys.stdout.write("Iteration %d\n" % i)
-        logdict = metropolis(lattice,temperature)
+    #initialize a progressbar for loop
+    widgets = ['Monte Carlo: ', progressbar.Percentage(), ' ', 
+               progressbar.Bar(marker=progressbar.RotatingMarker()),
+               ' ', progressbar.ETA(), ' ', 
+               progressbar.FileTransferSpeed('iters')]
+    pbar = ProgressBar(widgets=widgets, maxval=nmoves).start()
+    #loop to nmoves
+    for i in pbar(range(0,nmoves)):
+        logdict = metropolis(lattice,temperature,eps=1,extfield=1)
         log.write_log(logdict,num=i+1)
         mwriter.grab_frame()
         lattice.show(ax)
+        pbar.update()
 
+    pbar.finish()
     mwriter.finish()
 
 if __name__ == "__main__":
