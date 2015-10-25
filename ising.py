@@ -10,6 +10,7 @@ import sys
 import logger
 import progressbar
 from progressbar import ProgressBar
+import argparse
 
 class IsingLattice:
     #class constructor
@@ -118,20 +119,23 @@ def metropolis(lattice,temperature,eps=1,extfield=0):
 
 def main(args):
     #assign arguments from command line
-    n_x =  int(args[0])
-    n_y = int(args[1])
-    nmoves = int(args[2])
-    temperature = float(args[3])
-    filename = str(args[4])
-    moviefile = str(args[5])
+    n_x = args.n_x
+    n_y = args.n_y
+    nmoves = args.nmoves
+    temperature = args.T
+    logfile = args.logfile
+    moviefile = args.moviefile
+    eps = args.eps
+    extfield = args.ext
 
     #construct ising lattice
     lattice = IsingLattice(n_x,n_y,random=True)
 
-    #start logger
-    keys = ['x','y','dH','met','rng','result']
-    fmt = "%8d,%d,%d,%0.8f,%0.8f,%0.8f,%i"
-    log = logger.MetropolisLogger(filename,keys,fmtstring=fmt)    
+    #start logger if requested
+    if logfile:
+        keys = ['x','y','dH','met','rng','result']
+        fmt = "%8d,%d,%d,%0.8f,%0.8f,%0.8f,%i"
+        log = logger.MetropolisLogger(logfile,keys,fmtstring=fmt)    
 
     #make figure to plot matrix on
     plt.ion()
@@ -139,9 +143,10 @@ def main(args):
     ax = fig.add_subplot(1,1,1)
 
     #start and setup animator on this figure
-    FileMovieWriter = matplotlib.animation.writers['ffmpeg']
-    mwriter = FileMovieWriter(fps=60)
-    mwriter.setup(fig,moviefile,100)
+    if moviefile:
+        FileMovieWriter = matplotlib.animation.writers['ffmpeg']
+        mwriter = FileMovieWriter(fps=60)
+        mwriter.setup(fig,moviefile,100)
 
     #print message with program start
     sys.stdout.write("Starting %d Monte Carlo moves on (%d x %d) lattice\n"
@@ -154,14 +159,30 @@ def main(args):
     pbar = ProgressBar(widgets=widgets, maxval=nmoves).start()
     #loop to nmoves
     for i in pbar(range(0,nmoves)):
-        logdict = metropolis(lattice,temperature,eps=1,extfield=1)
-        log.write_log(logdict,num=i+1)
-        mwriter.grab_frame()
+        logdict = metropolis(lattice,temperature,eps=eps,extfield=extfield)
         lattice.show(ax)
+        if logfile:
+            log.write_log(logdict,num=i+1)
+        if moviefile:
+            mwriter.grab_frame()
         pbar.update()
-
     pbar.finish()
-    mwriter.finish()
+
+    if moviefile:
+        mwriter.finish()
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(description="A Monte Carlo Ising Model "
+                                                 "Simulator")
+    parser.add_argument('n_x',type=int,help='Number of cells in x-direction')
+    parser.add_argument('n_y',type=int,help='Number of cells in y-direction')
+    parser.add_argument('T',type=float,help='Temperature to conduct simulation at')
+    parser.add_argument('--eps',type=float,help='Strength of coupling interaction, default=1.0',default=1.0)
+    parser.add_argument('--ext',type=float,help='Strength of external field interaction, default=0.0',default=0.0)
+    parser.add_argument('-n','--nmoves',type=int,help="Number of Monte Carlo moves to execute, default: 100",
+                        default=100)
+    parser.add_argument('-o','--logfile',type=str,help="Name of file to write Metropolis"
+                                              " log to, default=None")
+    parser.add_argument('-m','--moviefile',type=str,help="Name of file to write movie to, default=None")
+    args = parser.parse_args()
+    main(args)
