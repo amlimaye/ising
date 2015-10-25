@@ -1,2 +1,5 @@
 *.png
 plt_test.py
+*.pyc
+*.txt
+*.mp4
