@@ -3,7 +3,7 @@
 #import required libraries, use TkAgg backend for plotting
 import numpy as np
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("MacOSX")
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import sys
@@ -126,6 +126,7 @@ def main(args):
     moviefile = args.moviefile
     eps = args.eps
     extfield = args.ext
+    interval = args.interval
 
     #construct ising lattice
     lattice = IsingLattice(n_x,n_y,random=True)
@@ -159,7 +160,8 @@ def main(args):
     #loop to nmoves
     for i in pbar(range(0,nmoves)):
         logdict = metropolis(lattice,temperature,eps=eps,extfield=extfield)
-        lattice.show(ax)
+        if (i % interval == 0):
+            lattice.show(ax)
         if logfile:
             log.write_log(logdict,num=i+1)
         if moviefile:
@@ -183,5 +185,7 @@ if __name__ == "__main__":
     parser.add_argument('-o','--logfile',type=str,help="Name of file to write Metropolis"
                                               " log to, default=None")
     parser.add_argument('-m','--moviefile',type=str,help="Name of file to write movie to, default=None")
+    parser.add_argument('-i','--interval',type=int,help="Interval to dump movie frames on, default=100",default=100)
     args = parser.parse_args()
+
     main(args)
