@@ -7,6 +7,7 @@ matplotlib.use("MacOSX")
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import sys
+import os
 import logger
 import progressbar
 from progressbar import ProgressBar
@@ -42,6 +43,10 @@ class IsingLattice:
     #get lattice shape
     def shape(self):
         return self._lattice.shape
+
+    #return numpy representation of current lattice state
+    def getNumpy(self):
+        return np.array(self._lattice)
 
     #get neighbors for lattice site x,y
     def getNeighbors(self,x,y):
@@ -127,6 +132,13 @@ def main(args):
     eps = args.eps
     extfield = args.ext
     interval = args.interval
+    location = args.moviedata_loc
+
+    #create directory for movie data if location is provided
+    if location:
+        locpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),location);
+        if not os.path.exists(locpath):
+            os.mkdir(locpath)
 
     #construct ising lattice
     lattice = IsingLattice(n_x,n_y,random=True)
@@ -161,7 +173,11 @@ def main(args):
     for i in pbar(range(0,nmoves)):
         logdict = metropolis(lattice,temperature,eps=eps,extfield=extfield)
         if (i % interval == 0):
-            lattice.show(ax)
+            if location:
+                filename = 'frame%04d' % (i/interval)
+                np.savez_compressed(os.path.join(locpath,filename),lattice.getNumpy())
+            else:
+                lattice.show(ax)
         if logfile:
             log.write_log(logdict,num=i+1)
         if moviefile:
@@ -184,6 +200,7 @@ if __name__ == "__main__":
                         default=100)
     parser.add_argument('-o','--logfile',type=str,help="Name of file to write Metropolis"
                                               " log to, default=None")
+    parser.add_argument('-l','--moviedata_loc',type=str,help="Name of directory to write movie data to, default=None")
     parser.add_argument('-m','--moviefile',type=str,help="Name of file to write movie to, default=None")
     parser.add_argument('-i','--interval',type=int,help="Interval to dump movie frames on, default=100",default=100)
     args = parser.parse_args()
