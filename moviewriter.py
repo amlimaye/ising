@@ -17,7 +17,7 @@ def update_figure(num,directory,data_prefix,ndigits):
     currFile = os.path.join(directory,data_prefix+(padstring % (num+1)))
     data = np.load(currFile)['arr_0']
 
-    #clear axis and replot
+    #update image with new frame data
     im.set_data(data)
 
     #return image object
