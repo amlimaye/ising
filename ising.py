@@ -157,7 +157,7 @@ def main(args):
     #start and setup animator on this figure
     if moviefile:
         FileMovieWriter = matplotlib.animation.writers['ffmpeg']
-        mwriter = FileMovieWriter(fps=60)
+        ewriter = FileMovieWriter(fps=60)
         mwriter.setup(fig,moviefile,100)
 
     #print message with program start

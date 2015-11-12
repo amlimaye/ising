@@ -3,3 +3,4 @@ plt_test.py
 *.pyc
 *.txt
 *.mp4
+*.npz
