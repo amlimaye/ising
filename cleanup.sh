@@ -1,3 +1,5 @@
+#quick cleanup script
+
 txts=$( ls | grep *.txt )
 mp4s=$( ls | grep *.mp4 )
 pngs=$( ls | grep *.png )
