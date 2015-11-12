@@ -3,10 +3,11 @@
 #import required libraries, use TkAgg backend for plotting
 import numpy as np
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("MacOSX")
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import sys
+import os
 import logger
 import progressbar
 from progressbar import ProgressBar
@@ -33,7 +34,6 @@ class IsingLattice:
     def show(self,ax):
         ax.clear()
         ax.matshow(self._lattice,cmap=plt.get_cmap("YlGnBu"))
-        plt.draw()
         return ax
 
     #get spin state at lattice site x,y
@@ -43,6 +43,10 @@ class IsingLattice:
     #get lattice shape
     def shape(self):
         return self._lattice.shape
+
+    #return numpy representation of current lattice state
+    def getNumpy(self):
+        return np.array(self._lattice)
 
     #get neighbors for lattice site x,y
     def getNeighbors(self,x,y):
@@ -127,6 +131,20 @@ def main(args):
     moviefile = args.moviefile
     eps = args.eps
     extfield = args.ext
+<<<<<<< HEAD
+=======
+    interval = args.interval
+    location = args.moviedata_loc
+
+    #compute number of digits required for save files
+    ndigits = np.ceil(np.log10(nmoves/interval))+1
+
+    #create directory for movie data if location is provided
+    if location:
+        locpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),location);
+        if not os.path.exists(locpath):
+            os.mkdir(locpath)
+>>>>>>> dev
 
     #construct ising lattice
     lattice = IsingLattice(n_x,n_y,random=True)
@@ -145,7 +163,11 @@ def main(args):
     #start and setup animator on this figure
     if moviefile:
         FileMovieWriter = matplotlib.animation.writers['ffmpeg']
+<<<<<<< HEAD
         mwriter = FileMovieWriter(fps=60)
+=======
+        ewriter = FileMovieWriter(fps=60)
+>>>>>>> dev
         mwriter.setup(fig,moviefile,100)
 
     #print message with program start
@@ -160,7 +182,17 @@ def main(args):
     #loop to nmoves
     for i in pbar(range(0,nmoves)):
         logdict = metropolis(lattice,temperature,eps=eps,extfield=extfield)
+<<<<<<< HEAD
         lattice.show(ax)
+=======
+        if (i % interval == 0):
+            if location:
+                padstring = 'frame%0'+str(ndigits)+'d'
+                filename = padstring % (i/interval)
+                np.savez_compressed(os.path.join(locpath,filename),lattice.getNumpy())
+            else:
+                lattice.show(ax)
+>>>>>>> dev
         if logfile:
             log.write_log(logdict,num=i+1)
         if moviefile:
@@ -183,6 +215,14 @@ if __name__ == "__main__":
                         default=100)
     parser.add_argument('-o','--logfile',type=str,help="Name of file to write Metropolis"
                                               " log to, default=None")
+<<<<<<< HEAD
     parser.add_argument('-m','--moviefile',type=str,help="Name of file to write movie to, default=None")
     args = parser.parse_args()
+=======
+    parser.add_argument('-l','--moviedata_loc',type=str,help="Name of directory to write movie data to, default=None")
+    parser.add_argument('-m','--moviefile',type=str,help="Name of file to write movie to, default=None")
+    parser.add_argument('-i','--interval',type=int,help="Interval to dump movie frames on, default=100",default=100)
+    args = parser.parse_args()
+
+>>>>>>> dev
     main(args)
