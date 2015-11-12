@@ -134,6 +134,9 @@ def main(args):
     interval = args.interval
     location = args.moviedata_loc
 
+    #compute number of digits required for save files
+    ndigits = np.ceil(np.log10(nmoves/interval))+1
+
     #create directory for movie data if location is provided
     if location:
         locpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),location);
@@ -174,7 +177,8 @@ def main(args):
         logdict = metropolis(lattice,temperature,eps=eps,extfield=extfield)
         if (i % interval == 0):
             if location:
-                filename = 'frame%04d' % (i/interval)
+                padstring = 'frame%0'+str(ndigits)+'d'
+                filename = padstring % (i/interval)
                 np.savez_compressed(os.path.join(locpath,filename),lattice.getNumpy())
             else:
                 lattice.show(ax)
