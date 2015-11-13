@@ -51,20 +51,16 @@ class IsingLattice:
     #get neighbors for lattice site x,y
     def getNeighbors(self,x,y):
         #initialize simple nearest neighbor list
-        neighborList = [(x+1,y),(x-1,y),(x,y+1),(x,y-1)]
-        #delete off edge cases
-        deletionList = []
-        if x == self._lattice.shape[0]-1:
-            deletionList.append(0)
-        elif x == 0:
-            deletionList.append(1)
-        if y == self._lattice.shape[1]-1:
-            deletionList.append(2)
-        elif y == 0:
-            deletionList.append(3)
-        deletionList.sort(reverse=True)
-        for idx in deletionList:
-            neighborList.pop(idx)
+        neighborList = [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]
+
+        #check if neighbors have walked off the edge of the box, apply periodic boundary conditions if so
+        for i,element in enumerate(neighborList):
+            for j,entry in enumerate(element):
+                if (entry < 0):
+                    neighborList[i][j] = self.shape()[j]-1
+                elif (entry >= self.shape()[j]):
+                    neighborList[i][j] = 0
+
         return neighborList
 
 #hamiltonian evaluation function
