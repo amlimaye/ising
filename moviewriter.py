@@ -44,7 +44,8 @@ def main(args):
     ax = fig.add_subplot(1,1,1)
 
     #fetch data for first frame
-    firstFile = os.path.join(directory,prefix+("%04d.npz" % 0))
+    padstring = "%0"+str(ndigits)+"d.npz"
+    firstFile = os.path.join(directory,prefix+(padstring % 0))
     firstData = np.load(firstFile)['arr_0']
     
     #make a global variable for first frame image (clunky, but works for now)
