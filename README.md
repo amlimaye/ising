@@ -1,2 +1,2 @@
 # ising
-Simple Monte Carlo Ising model simulator. Accepts or rejects single spin-flip moves based on simple Metropolis criterion. Direct movie output supported through Matplotlib.
+Simple Monte Carlo sampler for the 2-D Ising model. Writes out movies using Matplotlib.
