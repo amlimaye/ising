@@ -5,3 +5,4 @@ plt_test.py
 *.mp4
 *.out
 *.npz
+*.swp
